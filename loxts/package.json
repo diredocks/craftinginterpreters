@@ -1,0 +1,14 @@
+{
+  "name": "loxts",
+  "type": "module",
+  "main": "src/lox.ts",
+  "scripts": {
+    "dev": "bun src/lox.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
