@@ -28,7 +28,7 @@ class Lox {
 
   async runPrompt() {
     for (; ;) {
-      const line = prompt("վ'ᴗ' ի ");
+      const line = prompt("վ'ᴗ' ի ::");
       if (!line) break;
       this.run(line);
       this.hadError = false; // reset error state since last eval error had gone
