@@ -2,6 +2,25 @@ import { Token } from "./token";
 import { TokenType } from "./token-type";
 import Lox from "./lox.ts";
 
+const keywords = new Map<string, TokenType>([
+  ["and", TokenType.AND],
+  ["class", TokenType.CLASS],
+  ["else", TokenType.ELSE],
+  ["false", TokenType.FALSE],
+  ["for", TokenType.FOR],
+  ["fun", TokenType.FUN],
+  ["if", TokenType.IF],
+  ["nil", TokenType.NIL],
+  ["or", TokenType.OR],
+  ["print", TokenType.PRINT],
+  ["return", TokenType.RETURN],
+  ["super", TokenType.SUPER],
+  ["this", TokenType.THIS],
+  ["true", TokenType.TRUE],
+  ["var", TokenType.VAR],
+  ["while", TokenType.WHILE],
+]);
+
 export class Scanner {
   private tokens: Token[] = [];
   private start: number = 0;
@@ -49,8 +68,33 @@ export class Scanner {
       case '>':
         this.addToken(this.match('=') ? TokenType.GREATER_EQUAL : TokenType.GREATER);
         break;
+      case '/':
+        if (this.match('/')) {
+          while (this.peek() != '\n' && !this.isAtEnd()) this.advance();
+        } else if (this.match('*')) {
+          this.blockComments();
+        } else {
+          this.addToken(TokenType.SLASH);
+        }
+        break;
+      case ' ':
+      case '\r':
+      case '\t':
+        // Ignore whitespace.
+        break;
+      case '\n':
+        this.line++;
+        break;
+      case '"': this.string(); break;
       default:
-        Lox.error(this.line, `Unexpected character`);
+        // tedious for every single digit so we add it here
+        if (this.isDigit(c)) {
+          this.number();
+        } else if (this.isAlpha(c)) {
+          this.identifier();
+        } else {
+          Lox.error(this.line, `Unexpected character`);
+        }
     }
   }
 
@@ -69,5 +113,84 @@ export class Scanner {
 
     this.current++;
     return true;
+  }
+
+  private isDigit(c: string) {
+    return c >= '0' && c <= '9';
+  }
+
+  private peek() {
+    if (this.isAtEnd()) return '\0';
+    return this.source.charAt(this.current);
+  }
+
+  private string() {
+    while (this.peek() != '"' && !this.isAtEnd()) {
+      if (this.peek() === '\n') this.line++;
+      this.advance();
+    }
+
+    if (this.isAtEnd()) {
+      Lox.error(this.line, "Unterminated string.");
+      return
+    }
+
+    this.advance(); // closing the "
+    const value = this.source.substring(this.start + 1, this.current - 1);
+    this.addToken(TokenType.STRING, value);
+  }
+
+  private number() {
+    while (this.isDigit(this.peek())) this.advance();
+
+    if (this.peek() === '.' && this.isDigit(this.peekNext())) {
+      this.advance(); // consume the .
+
+      while (this.isDigit(this.peek())) this.advance();
+    }
+
+    const value = this.source.substring(this.start, this.current);
+    this.addToken(TokenType.NUMBER, value);
+  }
+
+  private peekNext() {
+    if (this.current + 1 >= this.source.length) return '\0';
+    return this.source.charAt(this.current + 1);
+  }
+
+  private isAlpha(c: string) {
+    return (c >= 'a' && c <= 'z') ||
+      (c >= 'A' && c <= 'Z') ||
+      c == '_';
+  }
+
+  private isAlphaNumeric(c: string) {
+    return this.isAlpha(c) || this.isDigit(c);
+  }
+
+  private identifier() {
+    while (this.isAlphaNumeric(this.peek())) this.advance();
+
+    const text = this.source.substring(this.start, this.current);
+    let type = keywords.get(text) ?? TokenType.IDENTIFIER;
+
+    this.addToken(type);
+  }
+
+  private blockComments() {
+    while (!this.isAtEnd()) {
+      if (this.match('/') && this.match('*')) { // indicate entering a nested comment
+        this.blockComments();
+      }
+      if (this.match('*') && this.match('/')) { // indicate the ending of current stack
+        return;
+      }
+      const char = this.advance();
+      if (char === '\n') {
+        this.line++;
+      }
+    };
+
+    Lox.error(this.line, "Unterminated block comment.");
   }
 }
