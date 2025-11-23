@@ -38,7 +38,10 @@ export class GenerateAst {
     const path = outputDir + "/" + baseName.toLowerCase() + ".ts";
 
     const writeGenerated = createGenerated();
+    this.defineVisitor(writeGenerated, baseName, types);
+
     writeGenerated("abstract class " + baseName + " {");
+    writeGenerated("  abstract accept<R>(visitor: Visitor<R>): R;");
     writeGenerated("}");
     writeGenerated("");
 
@@ -55,6 +58,21 @@ export class GenerateAst {
     writeGenerated("class " + className + " extends " + baseName + " {");
     // constructor will *define fields* and *store parameters*
     writeGenerated("  " + "constructor" + `(${fields})` + " { super(); }");
+    writeGenerated("");
+    // this is where we call visitor implemented methods
+    writeGenerated("  accept<R> (visitor: Visitor<R>): R {");
+    writeGenerated(`    return visitor.visit${className}${baseName}(this);`);
+    writeGenerated("  }");
+    writeGenerated("}");
+    writeGenerated("");
+  }
+
+  private defineVisitor(writeGenerated: any, baseName: string, types: string[]) {
+    writeGenerated("interface Visitor<R> {");
+    for (const type of types) {
+      const typeName = type.split('::')[0]?.trim()!;
+      writeGenerated(`  visit${typeName}${baseName}(expr: ${typeName}): R;`);
+    }
     writeGenerated("}");
     writeGenerated("");
   }
