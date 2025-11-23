@@ -3,7 +3,8 @@
   "type": "module",
   "main": "src/lox.ts",
   "scripts": {
-    "dev": "bun src/lox.ts"
+    "loxts": "bun src/lox.ts",
+    "generate_ast": "bun src/tool/generateAst.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
