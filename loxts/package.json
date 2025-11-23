@@ -4,7 +4,7 @@
   "main": "src/lox.ts",
   "scripts": {
     "loxts": "bun src/lox.ts",
-    "generate_ast": "bun src/tool/generateAst.ts"
+    "generate_ast": "bun src/tool/generate-ast.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
