@@ -178,19 +178,24 @@ export class Scanner {
   }
 
   private blockComments() {
-    while (!this.isAtEnd()) {
-      if (this.match('/') && this.match('*')) { // indicate entering a nested comment
-        this.blockComments();
+    for (let depth = 1; depth != 0 && !this.isAtEnd();) {
+      // indicate entering a block comment
+      if (this.match('/') && this.match('*')) {
+        depth++;
       }
-      if (this.match('*') && this.match('/')) { // indicate the ending of current stack
-        return;
+      // indicate exiting a block comment
+      if (this.match('*') && this.match('/')) {
+        depth--;
+        continue;
       }
       const char = this.advance();
       if (char === '\n') {
         this.line++;
       }
-    };
+    }
 
-    Lox.error(this.line, "Unterminated block comment.");
+    if (this.isAtEnd()) {
+      Lox.error(this.line, "Unterminated block comment.");
+    }
   }
 }
