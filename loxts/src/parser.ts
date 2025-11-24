@@ -10,10 +10,10 @@ export class Parser {
     return this.equality();
   }
 
-  private equality(): Expr {
-    let expr: Expr = this.comparison();
+  private binary(nextRule: () => Expr, ...types: TokenType[]): Expr {
+    let expr: Expr = nextRule();
 
-    while (this.match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL)) {
+    while (this.match(...types)) {
       const operator: Token = this.previous();
       const right: Expr = this.comparison();
       expr = new Binary(expr, operator, right);
@@ -22,43 +22,21 @@ export class Parser {
     return expr;
   }
 
+  private equality(): Expr {
+    return this.binary(this.comparison, TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL);
+  }
+
   private comparison(): Expr {
-    let expr: Expr = this.term();
-
-    while (this.match(
-      TokenType.GREATER, TokenType.GREATER_EQUAL,
-      TokenType.LESS, TokenType.LESS_EQUAL
-    )) {
-      const operator: Token = this.previous();
-      const right: Expr = this.term();
-      expr = new Binary(expr, operator, right);
-    }
-
-    return expr;
+    return this.binary(this.term,
+      TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL);
   }
 
   private term(): Expr {
-    let expr: Expr = this.factor();
-
-    while (this.match(TokenType.MINUS, TokenType.PLUS)) {
-      const operator: Token = this.previous();
-      const right: Expr = this.factor();
-      expr = new Binary(expr, operator, right);
-    }
-
-    return expr;
+    return this.binary(this.factor, TokenType.MINUS, TokenType.PLUS);
   }
 
   private factor(): Expr {
-    let expr: Expr = this.unary();
-
-    while (this.match(TokenType.SLASH, TokenType.STAR)) {
-      const operator: Token = this.previous();
-      const right: Expr = this.unary();
-      expr = new Binary(expr, operator, right);
-    }
-
-    return expr;
+    return this.binary(this.unary, TokenType.SLASH, TokenType.STAR);
   }
 
   private unary(): Expr {
