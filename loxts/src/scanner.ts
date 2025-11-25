@@ -178,7 +178,8 @@ export class Scanner {
   }
 
   private blockComments() {
-    for (let depth = 1; depth != 0 && !this.isAtEnd();) {
+    let depth = 1;
+    for (; depth != 0 && !this.isAtEnd();) {
       // indicate entering a block comment
       if (this.match('/') && this.match('*')) {
         depth++;
@@ -194,7 +195,7 @@ export class Scanner {
       }
     }
 
-    if (this.isAtEnd()) {
+    if (depth != 0) {
       Lox.error(this.line, "Unterminated block comment.");
     }
   }
