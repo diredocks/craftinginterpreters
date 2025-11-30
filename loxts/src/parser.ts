@@ -1,6 +1,9 @@
 import { Token } from "./token";
 import { TokenType } from "./token-type";
 import { Binary, Expr, Grouping, Literal, Unary } from "./expr";
+import Lox from "./lox";
+
+export class ParseError extends Error { }
 
 export class Parser {
   private current: number = 0;
@@ -23,20 +26,22 @@ export class Parser {
   }
 
   private equality(): Expr {
-    return this.binary(this.comparison, TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL);
+    return this.binary(() => this.comparison(),
+      TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL);
   }
 
   private comparison(): Expr {
-    return this.binary(this.term,
-      TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL);
+    return this.binary(() => this.term(),
+      TokenType.GREATER, TokenType.GREATER_EQUAL,
+      TokenType.LESS, TokenType.LESS_EQUAL);
   }
 
   private term(): Expr {
-    return this.binary(this.factor, TokenType.MINUS, TokenType.PLUS);
+    return this.binary(() => this.factor(), TokenType.MINUS, TokenType.PLUS);
   }
 
   private factor(): Expr {
-    return this.binary(this.unary, TokenType.SLASH, TokenType.STAR);
+    return this.binary(() => this.unary(), TokenType.SLASH, TokenType.STAR);
   }
 
   private unary(): Expr {
@@ -49,7 +54,6 @@ export class Parser {
     return this.primary();
   }
 
-  // @ts-expect-error, we make sure there must be a branch getting executed
   private primary(): Expr {
     if (this.match(TokenType.FALSE)) return new Literal(false);
     if (this.match(TokenType.TRUE)) return new Literal(true);
@@ -61,8 +65,40 @@ export class Parser {
 
     if (this.match(TokenType.LEFT_PAREN)) {
       const expr = this.expression();
-      // TODO: consume(RIGHT_PAREN, "Expect ')' after expression.");
+      this.consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.");
       return new Grouping(expr);
+    }
+
+    throw this.error(this.peek(), "Expect expression.");
+  }
+
+  private consume(type: TokenType, message: string) {
+    if (this.check(type)) return this.advance();
+    throw this.error(this.peek(), message);
+  }
+
+  private error(token: Token, message: string): ParseError {
+    Lox.error(token, message);
+    return new ParseError(message);
+  }
+
+  private synchronize() {
+    this.advance();
+
+    while (!this.isAtEnd()) {
+      if (this.previous().type === TokenType.SEMICOLON) return;
+      switch (this.peek().type) {
+        case TokenType.CLASS:
+        case TokenType.FUN:
+        case TokenType.VAR:
+        case TokenType.FOR:
+        case TokenType.IF:
+        case TokenType.WHILE:
+        case TokenType.PRINT:
+        case TokenType.RETURN:
+          return;
+      }
+      this.advance();
     }
   }
 
@@ -96,5 +132,13 @@ export class Parser {
 
   private previous() {
     return this.tokens[this.current - 1]!;
+  }
+
+  public parse() {
+    try {
+      return this.expression();
+    } catch (err) {
+      return null;
+    }
   }
 }

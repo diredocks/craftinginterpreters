@@ -1,4 +1,7 @@
+import { Token } from "./token";
 import { Scanner } from "./scanner";
+import { TokenType } from "./token-type";
+import { Parser } from "./parser";
 
 class Lox {
   private hadError = false;
@@ -38,13 +41,28 @@ class Lox {
   run(source: string) {
     const scanner: Scanner = new Scanner(source);
     const tokens = scanner.scanTokens();
-    for (const token of tokens) {
-      console.log(`${token}`);
-    }
+    const parser = new Parser(tokens);
+    const expression = parser.parse();
+
+    if (this.hadError) return;
+
+    // console.log(new AstPrinterRPN().print(expression!));
   }
 
-  public error(line: number, message: string) {
-    this.report(line, "", message);
+  public error(token: Token, message: string): void;
+  public error(line: number, message: string): void;
+
+  public error(arg1: Token | number, message: string): void {
+    if (typeof arg1 === "number") {
+      this.report(arg1, "", message);
+    } else {
+      if (arg1.type === TokenType.EOF) {
+        this.report(arg1.line, " at end", message);
+      } else {
+        this.report(arg1.line, ` at '${arg1.lexeme}'`, message);
+      }
+    }
+
     this.hadError = true;
   }
 
