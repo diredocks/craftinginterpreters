@@ -1,10 +1,14 @@
 import { Token } from "./token";
+import { Parser } from "./parser";
 import { Scanner } from "./scanner";
 import { TokenType } from "./token-type";
-import { Parser } from "./parser";
+import { Interpreter } from "./interpreter";
+import { RuntimeError } from "./runtime-error";
 
 class Lox {
   private hadError = false;
+  private hadRuntimeError = false;
+  private interpreter = new Interpreter();
 
   private constructor() { }
   private static _instance: Lox = new Lox();
@@ -27,6 +31,7 @@ class Lox {
   async runFile(path: string) {
     this.run(await Bun.file(path).text());
     if (this.hadError) process.exit(65);
+    if (this.hadRuntimeError) process.exit(70);
   }
 
   async runPrompt() {
@@ -46,7 +51,7 @@ class Lox {
 
     if (this.hadError) return;
 
-    // console.log(new AstPrinterRPN().print(expression!));
+    this.interpreter.interpret(expression!);
   }
 
   public error(token: Token, message: string): void;
@@ -69,6 +74,10 @@ class Lox {
   report(line: number, where: string, message: string) {
     console.error(`#${line} Error ${where} : ${message}`);
   }
+
+  public runtimeError(err: RuntimeError) {
+    console.error(`#${err.token.line} ${err.message}`)
+    this.hadRuntimeError = true;
   }
 }
 
