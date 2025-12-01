@@ -57,9 +57,9 @@ class Lox {
       this.report(arg1, "", message);
     } else {
       if (arg1.type === TokenType.EOF) {
-        this.report(arg1.line, " at end", message);
+        this.report(arg1.line, "at end", message);
       } else {
-        this.report(arg1.line, ` at '${arg1.lexeme}'`, message);
+        this.report(arg1.line, `at '${arg1.lexeme}'`, message);
       }
     }
 
@@ -67,7 +67,8 @@ class Lox {
   }
 
   report(line: number, where: string, message: string) {
-    console.log(`#${line} Error ${where} : ${message}`);
+    console.error(`#${line} Error ${where} : ${message}`);
+  }
   }
 }
 
