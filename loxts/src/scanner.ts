@@ -150,7 +150,7 @@ export class Scanner {
     }
 
     const value = this.source.substring(this.start, this.current);
-    this.addToken(TokenType.NUMBER, value);
+    this.addToken(TokenType.NUMBER, Number(value));
   }
 
   private peekNext() {
