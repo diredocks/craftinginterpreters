@@ -47,11 +47,11 @@ class Lox {
     const scanner: Scanner = new Scanner(source);
     const tokens = scanner.scanTokens();
     const parser = new Parser(tokens);
-    const expression = parser.parse();
+    const statements = parser.parse();
 
     if (this.hadError) return;
 
-    this.interpreter.interpret(expression!);
+    this.interpreter.interpret(statements!);
   }
 
   public error(token: Token, message: string): void;
