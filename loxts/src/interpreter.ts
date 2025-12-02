@@ -78,16 +78,26 @@ export class Interpreter implements Visitor<any> {
         this.checkNumberOperands(expr.operator, left, right);
         return left - right;
       case TokenType.PLUS:
-        if (typeof left === "number" && typeof right === "number") {
+        const leftType = typeof left;
+        const rightType = typeof right;
+        if (leftType === "number" && rightType === "number") {
           return Number(left) + Number(right);
         }
-        if (typeof left === "string" && typeof right === "string") {
+        if (leftType === "string" && rightType === "string") {
+          return left + right;
+        }
+        if ((leftType === "string" && rightType === "number") ||
+          (leftType === "number" && rightType === "string")) {
           return left + right;
         }
         throw new RuntimeError(expr.operator,
-          "Operands must be two numbers or two strings.");
+          "Operands must be numbers or strings.");
       case TokenType.SLASH:
         this.checkNumberOperands(expr.operator, left, right);
+        if (right === 0) {
+          throw new RuntimeError(expr.operator,
+            "Can not divide a number by zero.");
+        }
         return left / right;
       case TokenType.STAR:
         this.checkNumberOperands(expr.operator, left, right);
