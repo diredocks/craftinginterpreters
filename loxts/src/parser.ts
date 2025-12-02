@@ -2,6 +2,7 @@ import { Token } from "./token";
 import { TokenType } from "./token-type";
 import { Binary, Expr, Grouping, Literal, Unary } from "./expr";
 import Lox from "./lox";
+import { Expression, Print, Stmt } from "./stmt";
 
 export class ParseError extends Error { }
 
@@ -135,10 +136,27 @@ export class Parser {
   }
 
   public parse() {
-    try {
-      return this.expression();
-    } catch (err) {
-      return null;
+    const statements: Stmt[] = [];
+    while (!this.isAtEnd()) {
+      statements.push(this.statement());
     }
+    return statements;
+  }
+
+  private statement() {
+    if (this.match(TokenType.PRINT)) return this.printStatement();
+    return this.expressionStatement();
+  }
+
+  private printStatement() {
+    const value = this.expression();
+    this.consume(TokenType.SEMICOLON, "Expect ';' after value.");
+    return new Print(value);
+  }
+
+  private expressionStatement() {
+    const value = this.expression();
+    this.consume(TokenType.SEMICOLON, "Expect ';' after value.");
+    return new Expression(value);
   }
 }

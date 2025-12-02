@@ -2,20 +2,27 @@ import Lox from "./lox";
 import { Token } from "./token";
 import { TokenType } from "./token-type";
 import { RuntimeError } from "./runtime-error";
-import type { Binary, Expr, Grouping, Literal, Unary, Visitor } from "./expr";
+import type { Binary, Expr, Grouping, Literal, Unary, Visitor as ExprVisitor } from "./expr";
+import type { Expression, Print, Stmt, Visitor as StmtVisitor } from "./stmt";
 
-export class Interpreter implements Visitor<any> {
-  interpret(expr: Expr) {
+export class Interpreter
+  implements ExprVisitor<any>, StmtVisitor<any> {
+  interpret(statements: Stmt[]) {
     try {
-      const value = this.evaluate(expr);
-      console.log(this.stringify(value));
-    } catch (err: unknown) {
+      for (const statement of statements) {
+        this.execute(statement);
+      }
+    } catch (err) {
       if (err instanceof RuntimeError) {
         Lox.runtimeError(err);
       } else {
         throw err;
       }
     }
+  }
+
+  private execute(stmt: Stmt) {
+    stmt.accept(this);
   }
 
   private stringify(obj: any): string {
@@ -117,5 +124,14 @@ export class Interpreter implements Visitor<any> {
   private checkNumberOperands(operator: Token, left: any, right: any) {
     if (typeof left === "number" && typeof right === "number") return;
     throw new RuntimeError(operator, "Operands must be numbers.");
+  }
+
+  visitExpressionStmt(stmt: Expression) {
+    this.evaluate(stmt.expression);
+  }
+
+  visitPrintStmt(stmt: Print) {
+    const value = this.evaluate(stmt.expression);
+    console.log(this.stringify(value));
   }
 }
