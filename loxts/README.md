@@ -4,6 +4,8 @@ Lox implementation in Typescript
 
 ![Rocks!](./donald_duck_ariel_and_winnie_the_pooh_dancing.gif)
 
+> [!WARNING]: This implementation includes several non-standard Lox extensions from completing the optional challenges.
+
 To install dependencies:
 
 ```bash
